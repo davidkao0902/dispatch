@@ -1,0 +1,40 @@
+jobs:
+  include:
+  - stage: test
+    language: python
+    python: '3.7'
+    dist: 'xenial'
+    install:
+    - pip install codecov
+    - python setup.py install
+    - pip install -e .[dev]
+    script: dispatch-admin coverage
+    after_success: codecov
+  - language: node_js
+    node_js: 6.9.5
+    install:
+    - cd dispatch/static/manager
+    - npm install
+    script: npm run-script build
+  - stage: deploy
+    language: python
+    python: '3.7'
+    dist: 'xenial'
+    before_install:
+    - nvm install 6.9.5
+    - nvm use 6.9.5
+    install:
+    - cd dispatch/static/manager
+    - npm install --force
+    - npm run-script build    
+    - rm -rf node_modules
+    - cd ../../../
+    script: python setup.py sdist
+    deploy:
+      provider: pypi
+      user: ubyssey
+      skip_cleanup: true
+      password:
+        secure: LJUK9lcTt3uTGpCbJTXFQSUg4YP6R+Rrj3MelmIwjhFUBgQDRje9KynxE9z93BEZ9S3sohHbmHdlKLJsAfTb6aeA49Edl+f2oUGJYt+WbIUnxtL7El5IHOqx4IB3MP4X46M/amBSBS1L4JTWACbHICk1XI3FA+7JDGLJLR721qE=
+      on:
+        tags: true
